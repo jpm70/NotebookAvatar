@@ -17,7 +17,7 @@ No hay servidor: todo se ejecuta en tu navegador con **tu propia clave de Gemini
 3. **Generar guion** → Gemini escribe un monólogo con una diapositiva por punto (o «Diapositivas 1:1 directas» sin clave).
 4. **4. Vídeo Final** → fondos, portada, subtítulos y música; **Compilar Episodio** graba el `.mp4`/`.webm` en tiempo real.
 
-**Galería GhostArt:** en *Fondos de las diapositivas → Manual*, el botón **Galería GhostArt** (general o por diapositiva) abre las ilustraciones y GIF de [GhostArt](https://unfantasmaenelsistema.github.io/GhostArt/) con buscador y filtros; lo que elijas se coloca como fondo. Lee su `manifest.json`, así que lo que se suba a GhostArt aparece sin tocar la app. Los GIF se usan como imagen fija.
+**Galería GhostArt:** en *Fondos de las diapositivas → Manual*, el botón **Galería GhostArt** (general o por diapositiva) abre las ilustraciones y GIF de [GhostArt](https://unfantasmaenelsistema.github.io/GhostArt/) con buscador y filtros; lo que elijas se coloca como fondo. Lee su `manifest.json`, así que lo que se suba a GhostArt aparece sin tocar la app. Los GIF se animan en bucle en el vídeo (Chrome o Edge; en otros navegadores quedan como imagen fija).
 
 Usa Chrome o Edge recientes y mantén la pestaña visible mientras graba.
 
