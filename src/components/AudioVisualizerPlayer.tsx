@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { DialogueTurn, HostConfig, PodcastScript } from '../types';
 import { browserTTS } from '../services/ttsService';
+import { AVATAR_RIGS } from '../services/avatarAnimator';
 
 interface AudioVisualizerPlayerProps {
   script: PodcastScript;
@@ -209,7 +210,7 @@ export const AudioVisualizerPlayer: React.FC<AudioVisualizerPlayerProps> = ({
       )}
 
       {/* Dual Host Stage with Rich Avatars & Dynamic Speaking Status */}
-      <div className="grid grid-cols-2 gap-4 py-3 px-1">
+      <div className="grid grid-cols-1 gap-4 py-3 px-1 max-w-sm mx-auto">
         {/* Host A Avatar Card */}
         <div
           className={`p-4 rounded-2xl border transition-all duration-300 flex flex-col items-center text-center relative overflow-hidden ${
@@ -254,7 +255,7 @@ export const AudioVisualizerPlayer: React.FC<AudioVisualizerPlayerProps> = ({
             >
               {hostA.avatarUrl ? (
                 <img
-                  src={hostA.avatarUrl}
+                  src={AVATAR_RIGS[hostA.name === 'Bob' ? 'bob' : 'alice'].src}
                   alt={hostA.name}
                   className="w-full h-full object-cover"
                 />
@@ -302,97 +303,6 @@ export const AudioVisualizerPlayer: React.FC<AudioVisualizerPlayerProps> = ({
           </button>
         </div>
 
-        {/* Host B Avatar Card */}
-        <div
-          className={`p-4 rounded-2xl border transition-all duration-300 flex flex-col items-center text-center relative overflow-hidden ${
-            !isHostA && isPlaying
-              ? 'bg-gradient-to-b from-amber-950/60 to-slate-950 border-amber-500 shadow-xl shadow-amber-500/25 scale-[1.02]'
-              : isPlaying
-              ? 'bg-slate-950/40 border-slate-800/80 opacity-75'
-              : 'bg-slate-950/70 border-slate-800'
-          }`}
-        >
-          {/* Top speaking / listening status badge */}
-          <div className="mb-2">
-            {!isHostA && isPlaying ? (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 animate-pulse">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                En Onda • Hablando
-              </span>
-            ) : isPlaying ? (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold text-slate-400 bg-slate-900 border border-slate-800">
-                <Headphones className="w-2.5 h-2.5 text-amber-400" />
-                Escuchando
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium text-slate-400 bg-slate-900/60 border border-slate-800/60">
-                Co-Anfitrión
-              </span>
-            )}
-          </div>
-
-          {/* Avatar Container with Active Radar/Glow Rings */}
-          <div className="relative mb-3 group">
-            {!isHostA && isPlaying && (
-              <div className="absolute -inset-2 rounded-full bg-amber-500/30 blur-md animate-pulse" />
-            )}
-            
-            <div
-              className={`w-20 h-20 sm:w-22 sm:h-22 rounded-full overflow-hidden border-2 flex items-center justify-center transition-all duration-300 relative z-10 ${
-                !isHostA && isPlaying
-                  ? 'border-amber-400 ring-4 ring-amber-500/50 shadow-lg shadow-amber-500/30 bg-amber-950'
-                  : 'border-slate-800 bg-slate-900'
-              }`}
-            >
-              {hostB.avatarUrl ? (
-                <img
-                  src={hostB.avatarUrl}
-                  alt={hostB.name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <span className="font-bold text-2xl text-white">
-                  {hostB.avatarIcon || (hostB.name[0] || 'B').toUpperCase()}
-                </span>
-              )}
-            </div>
-
-            {/* Corner Icon Badge */}
-            <span
-              className={`absolute -bottom-1 -right-1 z-20 w-6 h-6 rounded-full border-2 border-slate-950 flex items-center justify-center text-xs shadow-md transition-all ${
-                !isHostA && isPlaying
-                  ? 'bg-amber-500 text-slate-950 animate-bounce font-bold'
-                  : 'bg-slate-800 text-slate-300'
-              }`}
-            >
-              {hostB.avatarIcon || '🎧'}
-            </span>
-          </div>
-
-          <div className="font-bold text-sm text-white">{hostB.name}</div>
-          <div className="text-[11px] text-slate-400 mb-2 truncate max-w-full px-2">{hostB.role}</div>
-
-          {/* Voice indicator badge */}
-          <div className="flex flex-col items-center gap-0.5 mb-3 w-full">
-            <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-md bg-amber-950/80 border border-amber-800/80 text-amber-300 font-semibold truncate max-w-[90%]">
-              {activeEngine === 'gemini' ? `Voz: ${hostB.voiceName || hostB.neuralVoice || 'Kore'}` : `Nativo: ${hostB.voiceName || hostB.voiceGender}`}
-            </span>
-            {hostB.voiceRegister && (
-              <span className="text-[9px] text-amber-400/90 font-medium truncate max-w-[90%]">
-                {hostB.voiceRegister}
-              </span>
-            )}
-          </div>
-
-          <button
-            type="button"
-            onClick={() => handleTestSpeaker('Host_B')}
-            disabled={isPlaying}
-            className="text-[11px] font-bold text-amber-400 hover:text-amber-300 bg-amber-950/60 hover:bg-amber-900/60 px-3 py-1.5 rounded-xl border border-amber-800/50 transition-all flex items-center gap-1.5 shadow-sm disabled:opacity-50"
-          >
-            <Volume2 className="w-3.5 h-3.5" /> Probar Voz {hostB.name}
-          </button>
-        </div>
       </div>
 
       {/* Waveform Visualizer */}

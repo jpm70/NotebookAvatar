@@ -3044,24 +3044,6 @@ export const VideoStudio: React.FC<VideoStudioProps> = ({
 
             {/* Opción Alternativa: Exportar Paquete Local de Python con Todos los Assets */}
             <div className="pt-2 border-t border-slate-800/80 space-y-2">
-              <button
-                type="button"
-                onClick={handleExportPythonBundle}
-                disabled={isExportingPythonBundle || isExporting}
-                className="w-full py-3 px-4 rounded-xl bg-slate-950 hover:bg-slate-800/80 border border-slate-800 hover:border-amber-500/50 text-slate-200 hover:text-white font-bold text-xs flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 transition-all shadow-sm"
-              >
-                {isExportingPythonBundle ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin text-amber-400" />
-                    <span>{pythonBundleNotice || 'Auditando y empaquetando assets...'}</span>
-                  </>
-                ) : (
-                  <>
-                    <FolderDown className="w-4 h-4 text-amber-400" />
-                    <span>📦 Exportar Paquete Python con Assets (.ZIP)</span>
-                  </>
-                )}
-              </button>
 
               {pythonBundleNotice && !isExportingPythonBundle && (
                 <div className="p-2.5 rounded-lg bg-emerald-950/40 border border-emerald-800/60 text-emerald-300 text-[11px] font-mono flex items-center gap-2 animate-in fade-in">
