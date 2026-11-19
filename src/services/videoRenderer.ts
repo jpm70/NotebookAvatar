@@ -39,6 +39,9 @@ export class VideoRenderer {
   private cachedLogoImg: HTMLImageElement | null = null;
   private cachedCoverImg: HTMLImageElement | null = null;
   private cachedBackgroundImgs = new Map<string, HTMLImageElement>();
+  /** Fondos GIF ya decodificados: fotogramas y su instante de inicio (µs). Se eligen por tiempo, no por reloj. */
+  private animatedBackgrounds = new Map<string, { frames: ImageBitmap[]; starts: number[]; total: number }>();
+  private decodingBackgrounds = new Map<string, Promise<void>>();
   private imageCache = new Map<string, HTMLImageElement>();
 
   /** Avatar narrador (NotebookAvatar): quién es, de qué lado y cómo mueve la boca en este fotograma. */
@@ -167,6 +170,9 @@ export class VideoRenderer {
     if (!av.complete || av.naturalWidth === 0) pending.push(av.decode().catch(() => undefined));
     Object.values(backgrounds).forEach((url) => {
       if (!url) return;
+      if (url.startsWith('data:image/gif') && 'ImageDecoder' in window) {
+        pending.push(this.decodeGifBackground(url));
+      }
       let img = this.cachedBackgroundImgs.get(url);
       if (!img) {
         img = new Image();
@@ -180,6 +186,52 @@ export class VideoRenderer {
     });
     const timeout = new Promise((resolve) => setTimeout(resolve, 15000));
     return Promise.race([Promise.all(pending), timeout]).then(() => undefined);
+  }
+
+  /** Decodifica un GIF en fotogramas (WebCodecs, Chrome/Edge). Si falla, el fondo queda como imagen fija. */
+  private decodeGifBackground(url: string): Promise<void> {
+    if (this.animatedBackgrounds.has(url)) return Promise.resolve();
+    let job = this.decodingBackgrounds.get(url);
+    if (!job) {
+      job = (async () => {
+        try {
+          const data = await (await fetch(url)).arrayBuffer();
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const dec = new (window as any).ImageDecoder({ data, type: 'image/gif' });
+          await dec.tracks.ready;
+          await dec.completed;
+          const n: number = dec.tracks.selectedTrack.frameCount;
+          const frames: ImageBitmap[] = [];
+          const starts: number[] = [];
+          let total = 0;
+          for (let i = 0; i < n; i++) {
+            const { image } = await dec.decode({ frameIndex: i });
+            frames.push(await createImageBitmap(image));
+            starts.push(total);
+            total += image.duration && image.duration > 0 ? image.duration : 100000; // GIF sin duración: 100 ms
+            image.close();
+          }
+          dec.close();
+          if (frames.length > 1 && total > 0) this.animatedBackgrounds.set(url, { frames, starts, total });
+        } catch {
+          // sin ImageDecoder o GIF raro: se usa el primer fotograma como imagen fija
+        } finally {
+          this.decodingBackgrounds.delete(url);
+        }
+      })();
+      this.decodingBackgrounds.set(url, job);
+    }
+    return job;
+  }
+
+  /** Fotograma del GIF que toca en el instante `time` (s); el GIF se repite en bucle. */
+  private animatedFrame(url: string, time: number): ImageBitmap | null {
+    const a = this.animatedBackgrounds.get(url);
+    if (!a) return null;
+    const t = ((time * 1e6) % a.total + a.total) % a.total;
+    let k = a.starts.length - 1;
+    while (k > 0 && a.starts[k] > t) k--;
+    return a.frames[k];
   }
 
   public resize(aspectRatio: '16:9' | '9:16', resolution: '720p' | '1080p' = '720p') {
@@ -249,7 +301,8 @@ export class VideoRenderer {
       this.cachedBackgroundImgs.set(bgImgUrl, bgImg);
     }
 
-    if (bgImg && bgImg.complete && bgImg.naturalWidth > 0) {
+    const bgFrame = bgImgUrl ? this.animatedFrame(bgImgUrl, time) : null;
+    if (bgFrame || (bgImg && bgImg.complete && bgImg.naturalWidth > 0)) {
       // Dibujar fondo ilustrado con zoom lento (Ken Burns cinematográfico)
       ctx.save();
       const zoom = transition === 'ken-burns' ? 1.05 + Math.sin(time * 0.15) * 0.03 : 1.02;
@@ -257,7 +310,7 @@ export class VideoRenderer {
       const drawH = h * zoom;
       const offsetX = (w - drawW) / 2;
       const offsetY = (h - drawH) / 2;
-      ctx.drawImage(bgImg, offsetX, offsetY, drawW, drawH);
+      ctx.drawImage((bgFrame || bgImg) as CanvasImageSource, offsetX, offsetY, drawW, drawH);
 
       // Viñeta suave: la ilustración se ve, y las tarjetas de texto ya llevan su propio panel opaco
       const vignette = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.25, w / 2, h / 2, Math.max(w, h) * 0.75);
